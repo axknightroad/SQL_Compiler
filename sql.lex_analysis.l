@@ -5,7 +5,7 @@
 */
 %option noyywrap nodefault yylineno case-insensitive
 %{
-    #include "psql.tab.h"
+    #include "sql.parsing.tab.h"
     #include <stdarg.h>
     #include <string.h>
 
@@ -25,6 +25,7 @@ SHOW             {return SHOW;}
 DROP             {return DROP;}
 USE              {return USE;}
 TABLE            {return TABLE;}
+TABLES           {return TABLES;}
 INSERT           {return INSERT;}
 INTO             {return INTO;}
 VALUES           {return VALUES;}
@@ -36,11 +37,13 @@ BETWEEN          {BEGIN BTWMODE; return BETWEEN;}
 <BTWMODE>AND     {BEGIN INITIAL; return AND;}
 AND              {return ANDOP;}
 OR               {return OR;}
+XOR              {rerurn XOR;}
 NOT              {return NOT;}
 DELETE           {return DELETE;}
 UPDATE           {return UPDATE;}
 SET              {return SET;}
-SCHEMA           {return SCHEMA;}
+SCHEMA           {return DATABASE;}
+SCHEMAS          {return DATABASES;}
 CASCADE          {return CASADE;}
 RESTRICT         {return RESTRICT;}
 CHAR             {return CHAR;}
@@ -70,13 +73,14 @@ ORDER            {return ORDER;}
 ASC              {return ASC;}
 DESC             {return DESC;}
 LIKE             {return LIKE;}
-NULL             {return NULL;}
+NULL             {return NULLX;}
 IN               {return IN;}
 LEFT             {return LEFT;}
 RIGHT            {return RIGHT;}
 OUT              {return OUT;}
 JOIN             {return JOIN;}
 ANY              {return ANY;}
+SOME             {return SOME;}
 /* 避免NOT和NOT EXISTS的移进/归约冲突 */
 EXISTS              {yylval.subtok=0; return EXISTS;}
 NOT[ \t\n]+EXISTS   {yylval.subtok=1; return EXISTS;}
@@ -125,12 +129,12 @@ FALSE     {yylval.intval=0; return BOOL;}
 "!>"       {yylval.subtok=8;return COMPARISON;}
 "<<"       {yylval.subtok=1;return SHIFT;}
 ">>"       {yylval.subtok=2;return SHIFT;}
-":="       {return ASSIGN;}
+
 
 /* 函数 */
 COUNT {int c=input();unput(c);
        if(c=='(') return FCOUNT;
-       yylval.strval=strdup(yytext);
+	     yylval.strval=strdup(yytext);
 	     return NAME;
       }
 
