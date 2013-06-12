@@ -10,15 +10,15 @@
     #include <string.h>
 
     void yyerror(char *s, ...);
-    
+
+
 %}
 %s BTWMODE
 
 
 %%
 
-/* 关键字 */
-CREAT            {return CREAT;}
+CREATE           {return CREATE;}
 DATABASE         {return DATABASE;}
 DATABASES        {return DATABASES;}
 SHOW             {return SHOW;}
@@ -32,19 +32,19 @@ VALUES           {return VALUES;}
 SELECT           {return SELECT;}
 FROM             {return FROM;}
 WHERE            {return WHERE;}
-/* 处理BETWEEN...AND... */
+
 BETWEEN          {BEGIN BTWMODE; return BETWEEN;}
 <BTWMODE>AND     {BEGIN INITIAL; return AND;}
 AND              {return ANDOP;}
 OR               {return OR;}
-XOR              {rerurn XOR;}
+XOR              {return XOR;}
 NOT              {return NOT;}
 DELETE           {return DELETE;}
 UPDATE           {return UPDATE;}
 SET              {return SET;}
 SCHEMA           {return DATABASE;}
 SCHEMAS          {return DATABASES;}
-CASCADE          {return CASADE;}
+CASCADE          {return CASCADE;}
 RESTRICT         {return RESTRICT;}
 CHAR             {return CHAR;}
 VARCHAR          {return VARCHAR;}
@@ -81,7 +81,7 @@ OUT              {return OUT;}
 JOIN             {return JOIN;}
 ANY              {return ANY;}
 SOME             {return SOME;}
-/* 避免NOT和NOT EXISTS的移进/归约冲突 */
+
 EXISTS              {yylval.subtok=0; return EXISTS;}
 NOT[ \t\n]+EXISTS   {yylval.subtok=1; return EXISTS;}
 UNION            {return UNION;}
@@ -92,27 +92,28 @@ AS               {return AS;}
 WITH             {return WITH;}
 CHECK            {return CHECK;}
 OPTION           {return OPTION;}
+DISTINCTROW      {return DISTINCTROW;}
 
 
 
 
 
-/* 数字 */
+
 -?[0-9]+                       { yylval.intval=atoi(yytext); return INTNUM;}
--?[0-9]+"."[0-9]*|
--?[0-9]+E[-+]?[0-9]+|
+-?[0-9]+"."[0-9]* |
+-?[0-9]+E[-+]?[0-9]+ |
 -?[0-9]+"."[0-9]*E[-+]?[0-9]+  {yylval.floatval=atof(yytext); return APPROXNUM;}
 
-/* 布尔值 */
+
 TRUE      {yylval.intval=1; return BOOL;}
 UNKNOWN   {yylval.intval=-1; return BOOL;}
 FALSE     {yylval.intval=0; return BOOL;}
 
-/* 字符串 */
+
 '(''|[^'\n])*'    {yylval.strval=strdup(yytext);return STRING;}
 '(''|[^'\n])*$    {yyerror("Unterminated string %s",yytext);}
 
-/*操作符*/
+
 
 [-+&~|^/%*(),.;!]   {return yytext[0];}
 "&&"                {return ANDOP;}
@@ -131,17 +132,17 @@ FALSE     {yylval.intval=0; return BOOL;}
 ">>"       {yylval.subtok=2;return SHIFT;}
 
 
-/* 函数 */
+
 COUNT {int c=input();unput(c);
        if(c=='(') return FCOUNT;
 	     yylval.strval=strdup(yytext);
 	     return NAME;
       }
 
-/* 名字 */
+
 [A-Za-z][A-Za-z0-9_]*  {yylval.strval=strdup(yytext); return NAME;}
 
-/* 其他一切 */
+
 [ \t\n]                /*whitespace*/
 .                      {yyerror("mystery character '%c'",*yytext);}
 
